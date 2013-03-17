@@ -1,12 +1,12 @@
 <html>
 <head>
-<script type="text/javascript" src="dashjs.js"></script>
+<script type="text/javascript" src="libdash-js.js"></script>
 <link href="http://vjs.zencdn.net/c/video-js.css" rel="stylesheet">
 <script src="http://vjs.zencdn.net/c/video.js"></script>
 <script>
 
 function DASHReceiver(obj) {
-	this.manager = new dashjs.DASHManager();
+	this.manager = new libdashjs.DASHManager();
 	this.count = (obj && obj.count) || 0;
 }
 
@@ -43,7 +43,7 @@ DASHReceiver.prototype.addSegmentToBuffer = function(num, rep) {
 	if(num == 0) { uri = rep.segmentbase.initialization.$.sourceurl; } 
 	else { uri = rep.segmentlist.segmenturl[num-1].$.media; }
 
-	seg = new dashjs.Segment(this.baseurls, uri);
+	seg = new libdashjs.Segment(this.baseurls, uri);
 	seg.startDownload(this.buffer);
 
 //	this.segmentbuffer.push(seg);

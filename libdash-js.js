@@ -1,12 +1,12 @@
 
 // Create a single global variable to hold all dashjs-related modules
-var dashjs;
-if(!dashjs) dashjs = {};
+var libdashjs;
+if(!libdashjs) libdashjs = {};
 
-dashjs = ( function namespace() {
+libdashjs = ( function namespace() {
 
 
-	// Define the various dashjs classes here, using local variables and functions
+	// Define the various libdashjs classes here, using local variables and functions
 
 	function DASHManager() {
 		console.debug("[DASHManager]");
@@ -77,6 +77,7 @@ dashjs = ( function namespace() {
 	}
 
 	function IMPD() {
+
 		this._url = null;
 		this._baseurls = ['http://attinia.polito.it:8080/_dash-js/','B','C','D'];
 
@@ -132,7 +133,7 @@ dashjs = ( function namespace() {
 		constructor: IMPD
 	}
 
-	// Now export dashjs API by returning a namespace object
+	// Now export libdashjs API by returning a namespace object
 	return {
 		DASHManager: DASHManager,
 		Segment: Segment,
