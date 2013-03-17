@@ -13,15 +13,10 @@ libdashjs = ( function namespace() {
 	}
 
 	// Returns an MPD object
-	DASHManager.prototype.open = function (url) {
+	DASHManager.prototype.open = function (mpdtext) {
 		console.debug("[DASHManager.prototype.open]");
 
-		// DOMParser parser(url)
-
-		// var mpd = parser.GetRootNode()->ToMPD();
-		var mpd = new IMPD();
-
-		//mpd.url = url;
+		var mpd = new IMPD(xml.xmlToJSON(mpdtext));
 
 		return mpd
 	}
@@ -42,6 +37,8 @@ libdashjs = ( function namespace() {
 		this.stateManager = new StateManager();
 		this.data = null;
 	}
+
+		
 
 	Segment.prototype.startDownload = function (buffer) {
 		var xhr = new XMLHttpRequest();
@@ -76,41 +73,43 @@ libdashjs = ( function namespace() {
 		buffer.append(this.data);
 	}
 
-	function IMPD() {
+	function IMPD(mpd) {
 
 		this._url = null;
-		this._baseurls = ['http://attinia.polito.it:8080/_dash-js/','B','C','D'];
+		this._mpd = mpd.MPD;
 
-		// see node.js xml2js
-                this._representation = {
-                        segmentbase: {  
-                                initialization: {
-                                        $: { sourceurl: 'bunny_2s_200kbit/bunny_200kbit_dash.mp4' }
-                                }
-                        },
-			segmentlist: {
-				$: { duration: 2 },
-				segmenturl: [
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s1.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s2.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s3.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s4.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s5.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s6.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s7.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s8.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s9.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s10.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s11.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s12.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s13.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s14.m4s' } },
-				{ $: { media: 'bunny_2s_200kbit/bunny_2s15.m4s' } },
-				]
-			}
-                } 
-
-		// convert to segments
+//		this._baseurls = ['http://attinia.polito.it:8080/_dash-js/','B','C','D'];
+//
+//		// see node.js xml2js
+//                this._representation = {
+//                        segmentbase: {  
+//                                initialization: {
+//                                        $: { sourceurl: 'bunny_2s_200kbit/bunny_200kbit_dash.mp4' }
+//                                }
+//                        },
+//			segmentlist: {
+//				$: { duration: 2 },
+//				segmenturl: [
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s1.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s2.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s3.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s4.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s5.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s6.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s7.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s8.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s9.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s10.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s11.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s12.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s13.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s14.m4s' } },
+//				{ $: { media: 'bunny_2s_200kbit/bunny_2s15.m4s' } },
+//				]
+//			}
+//                } 
+//
+//		// convert to segments
 	}
 	
 	IMPD.prototype = {
@@ -124,11 +123,12 @@ libdashjs = ( function namespace() {
 		},
 		get baseurls() {
 			console.debug("[IMPD.prototype.getBaseUrls]"); 
-			return this._baseurls;
+//			return this._baseurls;
+			return this._mpd.BaseURL.Text;
 		},
 		get representation() {
 			console.debug('[IMPD.prototype.representation]');
-			return this._representation;
+			return this._mpd.Period.AdaptationSet.Representation;
 		},
 		constructor: IMPD
 	}

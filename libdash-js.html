@@ -1,13 +1,25 @@
 <html>
 <head>
+<script type="text/javascript" src="xml.js"></script>
 <script type="text/javascript" src="libdash-js.js"></script>
 <link href="http://vjs.zencdn.net/c/video-js.css" rel="stylesheet">
 <script src="http://vjs.zencdn.net/c/video.js"></script>
 <script>
 
+
+function ajaxGet( url, fn ) {
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', url, true);
+	xhr.setRequestHeader('Cache-Control', 'no-cache');
+	xhr.onload = function () { fn(xhr) } ;
+	xhr.send();
+}
+
 function DASHReceiver(obj) {
 	this.manager = new libdashjs.DASHManager();
 	this.count = (obj && obj.count) || 0;
+	this.mpd = undefined;
+	this.started = false;
 }
 
 DASHReceiver.prototype.initBuffer = function (buf)  {
@@ -15,12 +27,18 @@ DASHReceiver.prototype.initBuffer = function (buf)  {
 }
 
 DASHReceiver.prototype.init = function (mpdurl) {
-	this.mpd = this.manager.open(mpdurl);
-	this.baseurls = [this.mpd.baseurls[0]];
-	console.debug(this.baseurls);
+	self = this;
+	ajaxGet(mpdurl, function (xhr) { 
+		// open works on an already retrieved mpd document, so no asynchronous
+		self.mpd = self.manager.open(xhr.responseText);
+		self.baseurls = [self.mpd.baseurls];
+		console.debug(self.baseurls);
+		if(self.started) { self.start(0); }
+	});
 }
 
 DASHReceiver.prototype.start = function (count) {
+	if(!this.mpd) { this.started = true; return false; }
 	this.count = count || 0;
 	var self = this;
 	// add initialization segment
@@ -40,8 +58,8 @@ DASHReceiver.prototype.addSegmentToBuffer = function(num, rep) {
 // if(num > rep.getSegmentList.getSegmentURLs.size) { this.segmentbuffer.setEOD(true); return; }
 
 	// check if we need the first segment (initialization) or the nexts
-	if(num == 0) { uri = rep.segmentbase.initialization.$.sourceurl; } 
-	else { uri = rep.segmentlist.segmenturl[num-1].$.media; }
+	if(num == 0) { uri = rep.SegmentBase.Initialization["@sourceURL"]; } 
+	else { uri = rep.SegmentList.SegmentURL[num-1]["@media"]; }
 
 	seg = new libdashjs.Segment(this.baseurls, uri);
 	seg.startDownload(this.buffer);
@@ -68,8 +86,8 @@ SegmentBuffer.prototype.push = function (seg) {
 	<video width="500" height="500" id="dash_video_tag" controls></video>
 </td>
 <td>
-	<video width="500" height="500" id="video_tag" class="video-js vjs-default-skin" preload="none" controls autoplay src="http://attinia.polito.it:8080/_dash-js/bunny_2s_200kbit/bunny_200kbit_dashNonSeg.mp4">
-	</video>
+	<!--video width="500" height="500" id="video_tag" class="video-js vjs-default-skin" preload="none" controls autoplay src="http://attinia.polito.it:8080/_dash-js/bunny_2s_200kbit/bunny_200kbit_dashNonSeg.mp4">
+	</video-->
 </td>
 </tr>
 </table>
@@ -96,6 +114,8 @@ SegmentBuffer.prototype.push = function (seg) {
 		var receiver = new DASHReceiver();
 		receiver.initBuffer(dashSourceBuffer);
 		receiver.init('http://attinia.polito.it:8080/_dash-js/bunny_ibmff_240.mpd');
+		// FIXME: init request is asynchronous because request for an url
+		//	  call start as a callback after init has finished
 		receiver.start();
 		dash_video_tag.play();
 		//alternate_video_tag.play();
