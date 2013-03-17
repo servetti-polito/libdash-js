@@ -1,0 +1,115 @@
+<html>
+<head>
+<script type="text/javascript" src="dashjs.js"></script>
+<link href="http://vjs.zencdn.net/c/video-js.css" rel="stylesheet">
+<script src="http://vjs.zencdn.net/c/video.js"></script>
+<script>
+
+function DASHReceiver(obj) {
+	this.manager = new dashjs.DASHManager();
+	this.count = (obj && obj.count) || 0;
+}
+
+DASHReceiver.prototype.initBuffer = function (buf)  {
+	this.buffer = buf;
+}
+
+DASHReceiver.prototype.init = function (mpdurl) {
+	this.mpd = this.manager.open(mpdurl);
+	this.baseurls = [this.mpd.baseurls[0]];
+	console.debug(this.baseurls);
+}
+
+DASHReceiver.prototype.start = function (count) {
+	this.count = count || 0;
+	var self = this;
+	// add initialization segment
+	self.addSegmentToBuffer(self.count++, self.mpd.representation);
+	// add first segment
+	self.addSegmentToBuffer(self.count++, self.mpd.representation);
+	// pre-buffer one segment
+	self.addSegmentToBuffer(self.count++, self.mpd.representation);
+	// schedule next segments
+	setInterval(function() { self.addSegmentToBuffer(self.count++, self.mpd.representation); }, 2000);
+}
+
+DASHReceiver.prototype.addSegmentToBuffer = function(num, rep) {
+	var seg;
+	var uri;
+
+// if(num > rep.getSegmentList.getSegmentURLs.size) { this.segmentbuffer.setEOD(true); return; }
+
+	// check if we need the first segment (initialization) or the nexts
+	if(num == 0) { uri = rep.segmentbase.initialization.$.sourceurl; } 
+	else { uri = rep.segmentlist.segmenturl[num-1].$.media; }
+
+	seg = new dashjs.Segment(this.baseurls, uri);
+	seg.startDownload(this.buffer);
+
+//	this.segmentbuffer.push(seg);
+}
+
+function SegmentBuffer() {
+	this.segments = [];
+}
+
+SegmentBuffer.prototype.push = function (seg) {
+	// mutex in
+	this.segments.push(seg);
+	// wake all condition variable
+	// mutex out
+}
+</script>
+</head>
+<body>
+<table widht="100%">
+<tr>
+<td>
+	<video width="500" height="500" id="dash_video_tag" controls></video>
+</td>
+<td>
+	<video width="500" height="500" id="video_tag" class="video-js vjs-default-skin" preload="none" controls autoplay src="http://attinia.polito.it:8080/_dash-js/bunny_2s_200kbit/bunny_200kbit_dashNonSeg.mp4">
+	</video>
+</td>
+</tr>
+</table>
+<script>
+
+	var dash_video_tag = document.getElementById("dash_video_tag");
+	var alternate_video_tag = document.getElementById("video_tag");
+	var MSE = new window.WebKitMediaSource();
+	dash_video_tag.src = window.URL.createObjectURL(MSE);
+	MSE.addEventListener('webkitsourceopen', mediaSourceReady);
+	alternate_video_tag.addEventListener('canplay', function() { 
+		console.log("Alternate video tag canplay."); 
+	});
+	var progress_events_counter = 0;
+	alternate_video_tag.addEventListener('progress', function(e) { 
+		console.log("Alternate video tag progress n." + ++progress_events_counter); 
+		console.log(e.target.buffered.length);
+	});
+
+	function mediaSourceReady(evt) {
+		// set flag we can start playing or downloading
+		// FIXME: where do we get type and codec from?
+		var dashSourceBuffer = MSE.addSourceBuffer('video/mp4; codecs="avc1.4d401f"');
+		var receiver = new DASHReceiver();
+		receiver.initBuffer(dashSourceBuffer);
+		receiver.init('http://attinia.polito.it:8080/_dash-js/bunny_ibmff_240.mpd');
+		receiver.start();
+		dash_video_tag.play();
+		//alternate_video_tag.play();
+	}
+
+
+
+//	MSE.sourceBuffers[0].timestampOffset = 0;
+//	MSE.sourceBuffers[0].append(data);
+
+//	var counter = 0;
+//	setInterval(function() { downloadNextSegment(mpd, counter++); }, 2000);
+
+
+</script>
+</body>
+</html>
