@@ -26,14 +26,14 @@ DASHReceiver.prototype.initBuffer = function (buf)  {
 	this.buffer = buf;
 }
 
-DASHReceiver.prototype.init = function (mpdurl) {
+DASHReceiver.prototype.init = function (mpdurl, cbkfn) {
 	self = this;
 	ajaxGet(mpdurl, function (xhr) { 
 		// open works on an already retrieved mpd document, so no asynchronous
 		self.mpd = self.manager.open(xhr.responseText);
 		self.baseurls = [self.mpd.baseurls];
 		console.debug(self.baseurls);
-		if(self.started) { self.start(this.started); }
+		cbkfn();
 	});
 }
 
@@ -116,10 +116,10 @@ SegmentBuffer.prototype.push = function (seg) {
 //		console.log("Alternate video tag canplay."); 
 //	});
 	var progress_events_counter = 0;
-	alternate_video_tag.addEventListener('progress', function(e) { 
-		console.log("Alternate video tag progress n." + ++progress_events_counter); 
-		console.log(e.target.buffered.length);
-	});
+//	alternate_video_tag.addEventListener('progress', function(e) { 
+//		console.log("Alternate video tag progress n." + ++progress_events_counter); 
+//		console.log(e.target.buffered.length);
+//	});
 
 	function mediaSourceReady(evt) {
 		// set flag we can start playing or downloading
@@ -127,19 +127,20 @@ SegmentBuffer.prototype.push = function (seg) {
 		var dashSourceBuffer = MSE.addSourceBuffer('video/mp4; codecs="avc1.4d401f"');
 		var receiver = new DASHReceiver();
 		receiver.initBuffer(dashSourceBuffer);
-		receiver.init('/dash-js-live/output/livestream.mpd');
-		// FIXME: init request is asynchronous because request for an url
-		//	  call start as a callback after init has finished
+		receiver.init('/dash-js-live/output/livestream.mpd', function () {
+			// FIXME: init request is asynchronous because request for an url
+			//	  call start as a callback after init has finished
 
-		/* compute which segment to ask
-                   - if VoD: the first one no. 0
-                   - if live: the current one
-                */
+			/* compute which segment to ask
+	                   - if VoD: the first one no. 0
+	                   - if live: the current one
+	                */
 		
-		receiver.start(receiver.getNowSegment());
+			receiver.start(receiver.getNowSegment());
 
-		dash_video_tag.play();
-		//alternate_video_tag.play();
+			dash_video_tag.play();
+			//alternate_video_tag.play();
+			});
 	}
 
 
