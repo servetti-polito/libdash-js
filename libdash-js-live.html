@@ -38,6 +38,13 @@ DASHReceiver.prototype.init = function (mpdurl) {
 }
 
 DASHReceiver.prototype.getNowSegment() {
+	var startTime = this.mpd.availabilityStartTime.getTime();
+	var nowTime = new Date().getTime();
+
+	debugger;
+
+	if (nowTime <= startTime) { return -1; } 
+	else { return Math.floor((nowTime-startTime)/1000/this.mpd.segmentDuration); }
 }
 
 DASHReceiver.prototype.start = function (count) {
@@ -120,7 +127,7 @@ SegmentBuffer.prototype.push = function (seg) {
 		var dashSourceBuffer = MSE.addSourceBuffer('video/mp4; codecs="avc1.4d401f"');
 		var receiver = new DASHReceiver();
 		receiver.initBuffer(dashSourceBuffer);
-		receiver.init('./bunny_ibmff_240.mpd');
+		receiver.init('/dash-js-live/output/livestream.mpd');
 		// FIXME: init request is asynchronous because request for an url
 		//	  call start as a callback after init has finished
 
@@ -128,11 +135,13 @@ SegmentBuffer.prototype.push = function (seg) {
                    - if VoD: the first one no. 0
                    - if live: the current one
                 */
+		
+		receiver.start(receiver.getNowSegment());
 
-		receiver.start();
 		dash_video_tag.play();
 		//alternate_video_tag.play();
 	}
+
 
 
 
