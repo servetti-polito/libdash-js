@@ -130,6 +130,14 @@ libdashjs = ( function namespace() {
 			console.debug('[IMPD.prototype.representation]');
 			return this._mpd.Period.AdaptationSet.Representation;
 		},
+		get availabilityStartTime() {
+			var utc_str = this._mpd["@availabilityStartTime"];
+			return new Date(utc_str);
+		},
+		get segmentDuration() {
+			// FIXME requires representation no ?
+			return this._mpd.AdaptationSet.Representation.SegmentTemplate["@duration"];
+		},
 		constructor: IMPD
 	}
 

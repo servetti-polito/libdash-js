@@ -1,0 +1,148 @@
+<html>
+<head>
+<script type="text/javascript" src="xml.js"></script>
+<script type="text/javascript" src="libdash-js.js"></script>
+<link href="http://vjs.zencdn.net/c/video-js.css" rel="stylesheet">
+<script src="http://vjs.zencdn.net/c/video.js"></script>
+<script>
+
+
+function ajaxGet( url, fn ) {
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', url, true);
+	xhr.setRequestHeader('Cache-Control', 'no-cache');
+	xhr.onload = function () { fn(xhr) } ;
+	xhr.send();
+}
+
+function DASHReceiver(obj) {
+	this.manager = new libdashjs.DASHManager();
+	this.count = (obj && obj.count) || 0;
+	this.mpd = undefined;
+	this.started = false;
+}
+
+DASHReceiver.prototype.initBuffer = function (buf)  {
+	this.buffer = buf;
+}
+
+DASHReceiver.prototype.init = function (mpdurl) {
+	self = this;
+	ajaxGet(mpdurl, function (xhr) { 
+		// open works on an already retrieved mpd document, so no asynchronous
+		self.mpd = self.manager.open(xhr.responseText);
+		self.baseurls = [self.mpd.baseurls];
+		console.debug(self.baseurls);
+		if(self.started) { self.start(this.started); }
+	});
+}
+
+DASHReceiver.prototype.getNowSegment() {
+}
+
+DASHReceiver.prototype.start = function (count) {
+	this.count = count || 0;
+	if(!this.mpd) { this.started = this.count; return false; }
+	var self = this;
+	// add initialization segment
+//FIXME	self.addSegmentToBuffer(self.count++, self.mpd.representation);
+	// add first segment
+//FIXME	self.addSegmentToBuffer(self.count++, self.mpd.representation);
+	// pre-buffer one segment
+//FIXME	self.addSegmentToBuffer(self.count++, self.mpd.representation);
+
+	/* TODO: we need to trace the current requested segment and the last received segment
+                 so that, normally, the receiver ask for the next segment: the one after the last received that has not yet been requested 
+        */
+	// schedule next segments
+	setInterval(function() { self.addSegmentToBuffer(self.count++, self.mpd.representation); }, 2000);
+}
+
+DASHReceiver.prototype.addSegmentToBuffer = function(num, rep) {
+	var seg;
+	var uri;
+
+// if(num > rep.getSegmentList.getSegmentURLs.size) { this.segmentbuffer.setEOD(true); return; }
+
+	// check if we need the first segment (initialization) or the nexts
+	if(num == 0) { uri = rep.SegmentBase.Initialization["@sourceURL"]; } 
+	else { uri = rep.SegmentList.SegmentURL[num-1]["@media"]; }
+
+	seg = new libdashjs.Segment(this.baseurls, uri);
+	seg.startDownload(this.buffer);
+
+//	this.segmentbuffer.push(seg);
+}
+
+function SegmentBuffer() {
+	this.segments = [];
+}
+
+SegmentBuffer.prototype.push = function (seg) {
+	// mutex in
+	this.segments.push(seg);
+	// wake all condition variable
+	// mutex out
+}
+</script>
+</head>
+<body>
+<table widht="100%">
+<tr>
+<td>
+	<video width="500" height="500" id="dash_video_tag" controls></video>
+</td>
+<td>
+	<!--video width="500" height="500" id="video_tag" class="video-js vjs-default-skin" preload="none" controls autoplay src="http://attinia.polito.it:8080/_dash-js/bunny_2s_200kbit/bunny_200kbit_dashNonSeg.mp4">
+	</video-->
+</td>
+</tr>
+</table>
+<script>
+
+	var dash_video_tag = document.getElementById("dash_video_tag");
+	var alternate_video_tag = document.getElementById("video_tag");
+	var MSE = new window.WebKitMediaSource();
+	dash_video_tag.src = window.URL.createObjectURL(MSE);
+	MSE.addEventListener('webkitsourceopen', mediaSourceReady);
+	alternate_video_tag.addEventListener('canplay', function() { 
+		console.log("Alternate video tag canplay."); 
+	});
+	var progress_events_counter = 0;
+	alternate_video_tag.addEventListener('progress', function(e) { 
+		console.log("Alternate video tag progress n." + ++progress_events_counter); 
+		console.log(e.target.buffered.length);
+	});
+
+	function mediaSourceReady(evt) {
+		// set flag we can start playing or downloading
+		// FIXME: where do we get type and codec from?
+		var dashSourceBuffer = MSE.addSourceBuffer('video/mp4; codecs="avc1.4d401f"');
+		var receiver = new DASHReceiver();
+		receiver.initBuffer(dashSourceBuffer);
+		receiver.init('./bunny_ibmff_240.mpd');
+		// FIXME: init request is asynchronous because request for an url
+		//	  call start as a callback after init has finished
+
+		/* compute which segment to ask
+                   - if VoD: the first one no. 0
+                   - if live: the current one
+                */
+
+		receiver.start();
+		dash_video_tag.play();
+		//alternate_video_tag.play();
+	}
+
+
+
+//	MSE.sourceBuffers[0].timestampOffset = 0;
+//	MSE.sourceBuffers[0].append(data);
+
+//	var counter = 0;
+//	setInterval(function() { downloadNextSegment(mpd, counter++); }, 2000);
+
+
+</script>
+</body>
+</html>
