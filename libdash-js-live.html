@@ -37,7 +37,7 @@ DASHReceiver.prototype.init = function (mpdurl) {
 	});
 }
 
-DASHReceiver.prototype.getNowSegment() {
+DASHReceiver.prototype.getNowSegment = function () {
 	var startTime = this.mpd.availabilityStartTime.getTime();
 	var nowTime = new Date().getTime();
 
@@ -112,9 +112,9 @@ SegmentBuffer.prototype.push = function (seg) {
 	var MSE = new window.WebKitMediaSource();
 	dash_video_tag.src = window.URL.createObjectURL(MSE);
 	MSE.addEventListener('webkitsourceopen', mediaSourceReady);
-	alternate_video_tag.addEventListener('canplay', function() { 
-		console.log("Alternate video tag canplay."); 
-	});
+//	alternate_video_tag.addEventListener('canplay', function() { 
+//		console.log("Alternate video tag canplay."); 
+//	});
 	var progress_events_counter = 0;
 	alternate_video_tag.addEventListener('progress', function(e) { 
 		console.log("Alternate video tag progress n." + ++progress_events_counter); 
