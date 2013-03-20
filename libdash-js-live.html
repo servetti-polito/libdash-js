@@ -6,6 +6,16 @@
 <script src="http://vjs.zencdn.net/c/video.js"></script>
 <script>
 
+function updateProgressInfo(el, url) {
+	$.getJSON( url, function (data) {
+		var str = "";
+		liveStreamInfo = data; console.log(data);
+		str += '<p>Live streaming of ' + data.streamName + ' started at ' + data.streamStart + '.</p>';
+		str += '<progress max="' + data.totSegment + '" value="' + data.curSegment + '"></progress>';
+		el.html(str);
+	});
+}
+
 
 function ajaxGet( url, fn ) {
 	var xhr = new XMLHttpRequest();
@@ -119,7 +129,14 @@ SegmentBuffer.prototype.push = function (seg) {
 </td>
 </tr>
 </table>
+<div id="progressInfo"></div>
 <script>
+
+	var rootFolder = '/libdash-js/output/';
+
+	var progressInfo_el = $('#progressInfo');
+	updateProgressInfo($('#progressInfo'), rootFolder + 'livestream.json');
+	setInterval( function() { updateProgressInfo($('#progressInfo'), rootFolder + 'livestream.json') }, 2000 );
 
 	var dash_video_tag = document.getElementById("dash_video_tag");
 	var alternate_video_tag = document.getElementById("video_tag");
@@ -141,7 +158,7 @@ SegmentBuffer.prototype.push = function (seg) {
 		var dashSourceBuffer = MSE.addSourceBuffer('video/mp4; codecs="avc1.4d401f"');
 		var receiver = new DASHReceiver();
 		receiver.initBuffer(dashSourceBuffer);
-		receiver.init('/libdash-js/output/livestream.mpd', function () {
+		receiver.init(rootFolder + 'livestream.mpd', function () {
 			// FIXME: init request is asynchronous because request for an url
 			//	  call start as a callback after init has finished
 
