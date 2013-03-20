@@ -5,6 +5,11 @@ OUTDIR="./output/"
 ROOT="/srv/ftp/dash/dataset/mmsys12/"
 EXT="m4s"
 
+if [ $HOSTNAME = "Latitude-E6410" ]; then
+	ROOT="/var/www/dash-itec-dataset/"
+fi
+
+
 SETS[0]="BigBuckBunny/bunny_2s/bunny_2s_100kbit"
 SETS[1]="ElephantsDream/ed_2s/ed_2sec_100kbit"
 
@@ -28,6 +33,7 @@ echo > ./${OUTDIR}/livestream.json
 
 START=`date -u --rfc-3339=seconds|tr " " "T"| cut -c 1-19`
 sed -e "s/_AVAILABILITYSTARTTIME_/${START}/g" < ${NAMES[$n]}.template.mpd > ./${OUTDIR}/${NAMES[$n]}.mpd
+ ln -sf ${NAMES[$n]}.mpd ./${OUTDIR}/livestream.mpd
 ln -sf ${ROOT}/${DIR}/${INITSEG[$n]} ./${OUTDIR}
 CNT=1
 TOT=`ls -1 ${ROOT}/${DIR}/${NAMES[$n]}*.${EXT} | wc -l`

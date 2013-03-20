@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mpeg:DASH:schema:MPD:2011" xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011 DASH-MPD.xsd" type="dynamic" minimumUpdatePeriod="PT20.0S" timeShiftBufferDepth="PT30M" availabilityStartTime="_AVAILABILITYSTARTTIME_" minBufferTime="PT8.0S" mediaPresentationDuration="PT0H10M53.46S" profiles="urn:mpeg:dash:profile:isoff-live:2011">
+  <BaseURL>/libdash-js/output/</BaseURL>
+  <Period>
+    <!-- Video -->
+    <AdaptationSet mimeType="video/mp4" codecs="avc1.4D401F" segmentAlignment="true" startWithSAP="1">
+      <Representation id="0" width="320" height="240" mimeType="video/mp4" codecs="avc1.4d401f" bandwidth="45652">
+			<SegmentTemplate timescale="90000" initialization="ed_1080p24_100kbit_dash.mp4" media="ed_2sec$Number%03$.m4s" duration="2" startNumber="1"/>
+	  </Representation>
+    </AdaptationSet>
+  </Period>
+</MPD>

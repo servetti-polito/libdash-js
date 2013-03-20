@@ -141,7 +141,7 @@ SegmentBuffer.prototype.push = function (seg) {
 		var dashSourceBuffer = MSE.addSourceBuffer('video/mp4; codecs="avc1.4d401f"');
 		var receiver = new DASHReceiver();
 		receiver.initBuffer(dashSourceBuffer);
-		receiver.init('/dash-js-live/output/livestream.mpd', function () {
+		receiver.init('/libdash-js/output/livestream.mpd', function () {
 			// FIXME: init request is asynchronous because request for an url
 			//	  call start as a callback after init has finished
 
