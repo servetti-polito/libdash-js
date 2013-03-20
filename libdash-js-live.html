@@ -41,8 +41,6 @@ DASHReceiver.prototype.getNowSegment = function () {
 	var startTime = this.mpd.availabilityStartTime.getTime();
 	var nowTime = new Date().getTime();
 
-	debugger;
-
 	if (nowTime <= startTime) { return -1; } 
 	else { return Math.floor((nowTime-startTime)/1000/this.mpd.segmentDuration); }
 }
@@ -52,7 +50,10 @@ DASHReceiver.prototype.start = function (count) {
 	if(!this.mpd) { this.started = this.count; return false; }
 	var self = this;
 	// add initialization segment
-//FIXME	self.addSegmentToBuffer(self.count++, self.mpd.representation);
+	if(count != 0) {
+		self.addSegmentToBuffer(0, self.mpd.representation);
+	}
+	self.addSegmentToBuffer(self.count++, self.mpd.representation);
 	// add first segment
 //FIXME	self.addSegmentToBuffer(self.count++, self.mpd.representation);
 	// pre-buffer one segment
@@ -72,10 +73,23 @@ DASHReceiver.prototype.addSegmentToBuffer = function(num, rep) {
 // if(num > rep.getSegmentList.getSegmentURLs.size) { this.segmentbuffer.setEOD(true); return; }
 
 	// check if we need the first segment (initialization) or the nexts
-	if(num == 0) { uri = rep.SegmentBase.Initialization["@sourceURL"]; } 
-	else { uri = rep.SegmentList.SegmentURL[num-1]["@media"]; }
+	/* FIXME!: change into a get method that takes care of using different descriptions
+                   segmentBase, segmentList, segmentTemplate
+                   see libdash implementation
+        */
+	if(num == 0) { uri = rep.SegmentTemplate["@initialization"]; } 
+	else { 
+		uri = rep.SegmentTemplate["@media"]; 
 
-	seg = new libdashjs.Segment(this.baseurls, uri);
+		// FIXME: change uri from template to real uri (in dash library)
+
+		var regex = /\$(.*)%(\d+)\$/;
+		var match = regex.exec(uri);
+		//uri = uri.replace(match[0],([1e15]+num).slice(-match[2]));
+		uri = uri.replace(match[0],num);
+	}
+
+	seg = new libdashjs.Segment(this.baseurls, uri, num);
 	seg.startDownload(this.buffer);
 
 //	this.segmentbuffer.push(seg);

@@ -32,10 +32,13 @@ libdashjs = ( function namespace() {
 				IN_PROGRESS: 'IN_PROGRESS',
 				COMPLETED: 'COMPLETED'  };
 
-	function Segment(baseurls, uri) {
+	Segment.firstSegment = true;
+
+	function Segment(baseurls, uri, no) {
 		this.absoluteuri = baseurls[0] + uri;
 		this.stateManager = new StateManager();
 		this.data = null;
+		this.no = no;
 	}
 
 		
@@ -69,7 +72,10 @@ libdashjs = ( function namespace() {
 
 	Segment.prototype.addToBuffer = function(buffer) {
 		// FIXME: find the right offset
-		// this.buffer.timestampOffset = 0;
+		if(Segment.firstSegment == true && this.no != 0) {
+			Segment.firstSegment = false;
+			buffer.timestampOffset = -(this.no-1) * 2;	// FIXME: use segment duration
+		}
 		buffer.append(this.data);
 	}
 
@@ -77,6 +83,7 @@ libdashjs = ( function namespace() {
 
 		this._url = null;
 		this._mpd = mpd.MPD;
+		console.debug(this._mpd);
 
 //		this._baseurls = ['http://attinia.polito.it:8080/_dash-js/','B','C','D'];
 //
@@ -136,7 +143,7 @@ libdashjs = ( function namespace() {
 		},
 		get segmentDuration() {
 			// FIXME requires representation no ?
-			return this._mpd.AdaptationSet.Representation.SegmentTemplate["@duration"];
+			return this._mpd.Period.AdaptationSet.Representation.SegmentTemplate["@duration"];
 		},
 		constructor: IMPD
 	}
